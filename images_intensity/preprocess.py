@@ -1,21 +1,20 @@
 #!/usr/bin/env python3
-# preprocess_from_folder.py
+# preprocess.py
 
 import os
 import glob
-import numpy as np
 import matplotlib.pyplot as plt
 
-from astropy.io import fits
+from astropy.coordinates import SkyCoord
+import astropy.units as u
+
 from sunpy.map import Map
-from sunpy.image.coalignment import mapsequence_coalignment
-from sunpy.time import parse_time
+from sunpy.physics.differential_rotation import differential_rotate
 
 # -------- PARÁMETROS --------
 input_dir  = "data_hmi_Ic_45s/"
-output_dir = "data_hmi_Ic_45s_proc/"
-poly_deg   = 3       # grado del polinomio para limb-darkening
-n_bins     = 100     # número de anillos para perfil radial
+output_dir = "data_hmi_Ic_45s_crop_dr/"
+crop_lim   = 500 * u.arcsec   # ±500 arcsec en X e Y
 
 # -------- CREA LAS CARPETAS --------
 os.makedirs(input_dir, exist_ok=True)
@@ -26,62 +25,44 @@ files = sorted(glob.glob(os.path.join(input_dir, "*.fits")))
 if not files:
     raise FileNotFoundError(f"No se encontró ningún FITS en {input_dir}")
 
-# -------- 1) Leer como MapSequence --------
-print(f"Cargando {len(files)} mapas desde {input_dir}")
+# -------- 1) Leer mapas --------
 maps = [Map(f) for f in files]
 
-# -------- 2) Co‑alineación al primer frame --------
-print("Co‑alineando imágenes…")
-aligned = mapsequence_coalignment.mapsequence_coalignment(maps, reference=maps[0])
+# -------- 2) Determinar tiempo de referencia --------
+# Usamos la fecha del primer mapa como 'time' objetivo
+ref_time = maps[0].date
 
-# -------- 3) Función de corrección de limb‑darkening --------
-def correct_limb_darkening(smap, poly_deg=3, n_bins=100):
-    data = smap.data.astype(float)
-    y, x = np.indices(data.shape)
-    cx, cy = smap.reference_pixel.x.value, smap.reference_pixel.y.value
-    r = np.sqrt((x-cx)**2 + (y-cy)**2) / smap.rsun_pix
+# -------- 3) Rotación diferencial de cada mapa al tiempo ref_time --------
+aligned = []
+for m in maps:
+    # Solo especificamos time; se usa el observer del mapa original
+    m_rot = differential_rotate(m, time=ref_time)
+    aligned.append(m_rot)
 
-    # Construir perfil radial
-    bins = np.linspace(0, 1, n_bins+1)
-    centers = 0.5*(bins[:-1] + bins[1:])
-    medians = np.zeros(n_bins)
-    for i in range(n_bins):
-        mask = (r >= bins[i]) & (r < bins[i+1])
-        medians[i] = np.median(data[mask]) if np.any(mask) else np.nan
+# -------- 4) Función de recorte helioproyectivo --------
+def crop_map(smap, lim):
+    bl = SkyCoord(-lim, -lim, frame=smap.coordinate_frame)
+    tr = SkyCoord( lim,  lim, frame=smap.coordinate_frame)
+    return smap.submap(bl, tr)
 
-    ok = ~np.isnan(medians)
-    coeff = np.polyfit(centers[ok], medians[ok], poly_deg)
-    limb = np.polyval(coeff, r)
+# -------- 5) Recortar y guardar mapas --------
+for m in aligned:
+    m_crop = crop_map(m, crop_lim)
+    fname = os.path.basename(m.filenames[0])
+    out_path = os.path.join(output_dir, "dr_crop_" + fname)
+    m_crop.save(out_path, overwrite=True)
 
-    corrected = np.zeros_like(data)
-    mask_disk = r <= 1
-    corrected[mask_disk] = data[mask_disk] / limb[mask_disk]
+# -------- 6) Visualización antes/después del primer frame --------
+orig = maps[0]
+crpd = crop_map(aligned[0], crop_lim)
 
-    return smap._new_instance(corrected, smap.meta)
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+orig.plot(axes=ax1, cmap="gray", title="Original (full disk)")
+ax1.set_axis_off()
 
-# -------- 4) Aplicar corrección y guardar --------
-processed = []
-print("Aplicando limb‑darkening y guardando…")
-for m, f in zip(aligned, files):
-    m_corr = correct_limb_darkening(m, poly_deg=poly_deg, n_bins=n_bins)
-    processed.append(m_corr)
-    out_path = os.path.join(output_dir, "proc_" + os.path.basename(f))
-    m_corr.save(out_path, overwrite=True)
+crpd.plot(axes=ax2, cmap="gray", title=f"Cropped ±{crop_lim.value}\"")
+ax2.set_axis_off()
 
-# -------- 5) Visualización antes/después (opcional) --------
-fig, axes = plt.subplots(1,2, figsize=(12,6))
-axes[0].imshow(maps[0].data, cmap="gray", origin="lower")
-axes[0].set_title("Original")
-axes[0].axis("off")
-
-im = axes[1].imshow(processed[0].data, cmap="gray",
-                    vmin=np.percentile(processed[0].data,5),
-                    vmax=np.percentile(processed[0].data,95),
-                    origin="lower")
-axes[1].set_title("Limb‑darkening corregido")
-axes[1].axis("off")
-
-plt.colorbar(im, ax=axes.ravel().tolist(), shrink=0.6)
 plt.tight_layout()
 plt.show()
 
