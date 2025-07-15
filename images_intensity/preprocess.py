@@ -28,51 +28,54 @@ first_map = Map(files[0])
 ref_observer = first_map.observer_coordinate
 
 # -------- PROCESAR CADA ARCHIVO INDIVIDUALMENTE --------
-# Solo mantenemos en memoria un mapa a la vez
-def crop_and_save(path, observer, out_dir, crop_lim, is_first=False):
+def crop_and_save(path, observer, out_dir, crop_lim, is_first=False, index=0, total=1):
+    fname = os.path.basename(path)
+    progress = (index + 1) / total * 100
+    print(f"[{index + 1}/{total}] ({progress:.1f}%) Aligning {fname}...")
     smap = Map(path)
-    # Rotación diferencial al observador de referencia
     m_rot = differential_rotate(smap, observer=observer)
-    # Recorte
+
+    print(f"[{index + 1}/{total}] ({progress:.1f}%) Cropping {fname}...")
     bl = SkyCoord(-crop_lim, -crop_lim, frame=m_rot.coordinate_frame)
     tr = SkyCoord(crop_lim, crop_lim, frame=m_rot.coordinate_frame)
     m_crop = m_rot.submap(bottom_left=bl, top_right=tr)
-    # Guardar
-    fname = os.path.basename(path)
-    m_crop.save(os.path.join(out_dir, f"dr_crop_{fname}"), overwrite=True)
-    # Devolver el primer recortado para plot
+
+    out_path = os.path.join(out_dir, f"dr_crop_{fname}")
+    m_crop.save(out_path, overwrite=True)
+
     return m_crop if is_first else None
 
 # Ejecutar procesamiento rápido
 cropped_first = None
+total_files = len(files)
+
 for i, fpath in enumerate(files):
     cropped = crop_and_save(
         fpath,
         ref_observer,
         OUTPUT_DIR,
         CROP_LIM,
-        is_first=(i==0)
+        is_first=(i == 0),
+        index=i,
+        total=total_files
     )
     if cropped is not None:
         cropped_first = cropped
 
-# -------- VISUALIZAR ORIGINAL Y PRIMER CROP --------
+# # -------- VISUALIZAR ORIGINAL Y PRIMER CROP --------
 # plt.close('all')
 # fig, axes = plt.subplots(1, 2, figsize=(12, 6), subplot_kw={'projection': first_map.wcs})
 
-# # Original full disk
 # axes[0].imshow(first_map.data, origin='lower', cmap='gray')
 # axes[0].set_title("Original (full disk)")
 # axes[0].set_xlabel('Helioprojective Lon')
 # axes[0].set_ylabel('Helioprojective Lat')
 
-# # Primer recortado
 # axes[1].imshow(cropped_first.data, origin='lower', cmap='gray')
 # axes[1].set_title(f"Cropped ±{CROP_LIM.value}\" arsec")
 # axes[1].set_xlabel('Helioprojective Lon')
 # axes[1].set_ylabel('Helioprojective Lat')
 
-# # Colorbar horizontal para ambas
 # cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
 # cbar.set_label('Intensidad [DN]')
 
