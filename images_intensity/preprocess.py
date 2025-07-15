@@ -1,69 +1,81 @@
 #!/usr/bin/env python3
-# preprocess.py
+# preprocess_optimized.py
 
 import os
 import glob
 import matplotlib.pyplot as plt
-
-from astropy.coordinates import SkyCoord
 import astropy.units as u
-
+from astropy.coordinates import SkyCoord
 from sunpy.map import Map
 from sunpy.physics.differential_rotation import differential_rotate
 
 # -------- PARÁMETROS --------
-input_dir  = "data_hmi_Ic_45s/"
-output_dir = "data_hmi_Ic_45s_crop_dr/"
-crop_lim   = 500 * u.arcsec   # ±500 arcsec en X e Y
+INPUT_DIR  = "data_hmi_Ic_45s/"
+OUTPUT_DIR = "data_hmi_Ic_45s_crop_dr/"
+CROP_LIM   = 500 * u.arcsec   # ±500 arcsec en X e Y
 
-# -------- CREA LAS CARPETAS --------
-os.makedirs(input_dir, exist_ok=True)
-os.makedirs(output_dir, exist_ok=True)
+# -------- PREPARAR DIRECTORIOS --------
+os.makedirs(INPUT_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# -------- LISTA DE ARCHIVOS --------
-files = sorted(glob.glob(os.path.join(input_dir, "*.fits")))
+# -------- LISTAR FITS --------
+files = sorted(glob.glob(os.path.join(INPUT_DIR, "*.fits")))
 if not files:
-    raise FileNotFoundError(f"No se encontró ningún FITS en {input_dir}")
+    raise FileNotFoundError(f"No FITS found in {INPUT_DIR}")
 
-# -------- 1) Leer mapas --------
-maps = [Map(f) for f in files]
+# -------- LEER PRIMER MAPA PARA REFERENCIA --------
+first_map = Map(files[0])
+ref_observer = first_map.observer_coordinate
 
-# -------- 2) Determinar tiempo de referencia --------
-# Usamos la fecha del primer mapa como 'time' objetivo
-ref_time = maps[0].date
+# -------- PROCESAR CADA ARCHIVO INDIVIDUALMENTE --------
+# Solo mantenemos en memoria un mapa a la vez
+def crop_and_save(path, observer, out_dir, crop_lim, is_first=False):
+    smap = Map(path)
+    # Rotación diferencial al observador de referencia
+    m_rot = differential_rotate(smap, observer=observer)
+    # Recorte
+    bl = SkyCoord(-crop_lim, -crop_lim, frame=m_rot.coordinate_frame)
+    tr = SkyCoord(crop_lim, crop_lim, frame=m_rot.coordinate_frame)
+    m_crop = m_rot.submap(bottom_left=bl, top_right=tr)
+    # Guardar
+    fname = os.path.basename(path)
+    m_crop.save(os.path.join(out_dir, f"dr_crop_{fname}"), overwrite=True)
+    # Devolver el primer recortado para plot
+    return m_crop if is_first else None
 
-# -------- 3) Rotación diferencial de cada mapa al tiempo ref_time --------
-aligned = []
-for m in maps:
-    # Solo especificamos time; se usa el observer del mapa original
-    m_rot = differential_rotate(m, time=ref_time)
-    aligned.append(m_rot)
+# Ejecutar procesamiento rápido
+cropped_first = None
+for i, fpath in enumerate(files):
+    cropped = crop_and_save(
+        fpath,
+        ref_observer,
+        OUTPUT_DIR,
+        CROP_LIM,
+        is_first=(i==0)
+    )
+    if cropped is not None:
+        cropped_first = cropped
 
-# -------- 4) Función de recorte helioproyectivo --------
-def crop_map(smap, lim):
-    bl = SkyCoord(-lim, -lim, frame=smap.coordinate_frame)
-    tr = SkyCoord( lim,  lim, frame=smap.coordinate_frame)
-    return smap.submap(bl, tr)
+# -------- VISUALIZAR ORIGINAL Y PRIMER CROP --------
+plt.close('all')
+fig, axes = plt.subplots(1, 2, figsize=(12, 6), subplot_kw={'projection': first_map.wcs})
 
-# -------- 5) Recortar y guardar mapas --------
-for m in aligned:
-    m_crop = crop_map(m, crop_lim)
-    fname = os.path.basename(m.filenames[0])
-    out_path = os.path.join(output_dir, "dr_crop_" + fname)
-    m_crop.save(out_path, overwrite=True)
+# Original full disk
+axes[0].imshow(first_map.data, origin='lower', cmap='gray')
+axes[0].set_title("Original (full disk)")
+axes[0].set_xlabel('Helioprojective Lon')
+axes[0].set_ylabel('Helioprojective Lat')
 
-# -------- 6) Visualización antes/después del primer frame --------
-orig = maps[0]
-crpd = crop_map(aligned[0], crop_lim)
+# Primer recortado
+axes[1].imshow(cropped_first.data, origin='lower', cmap='gray')
+axes[1].set_title(f"Cropped ±{CROP_LIM.value}\" arsec")
+axes[1].set_xlabel('Helioprojective Lon')
+axes[1].set_ylabel('Helioprojective Lat')
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-orig.plot(axes=ax1, cmap="gray", title="Original (full disk)")
-ax1.set_axis_off()
+# Colorbar horizontal para ambas
+cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
+cbar.set_label('Intensidad [DN]')
 
-crpd.plot(axes=ax2, cmap="gray", title=f"Cropped ±{crop_lim.value}\"")
-ax2.set_axis_off()
-
-plt.tight_layout()
 plt.show()
 
-print("Procesamiento completado. Mapas guardados en:", output_dir)
+print("Procesamiento optimizado completado. Mapas guardados en:", OUTPUT_DIR)
