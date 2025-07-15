@@ -57,25 +57,25 @@ for i, fpath in enumerate(files):
         cropped_first = cropped
 
 # -------- VISUALIZAR ORIGINAL Y PRIMER CROP --------
-plt.close('all')
-fig, axes = plt.subplots(1, 2, figsize=(12, 6), subplot_kw={'projection': first_map.wcs})
+# plt.close('all')
+# fig, axes = plt.subplots(1, 2, figsize=(12, 6), subplot_kw={'projection': first_map.wcs})
 
-# Original full disk
-axes[0].imshow(first_map.data, origin='lower', cmap='gray')
-axes[0].set_title("Original (full disk)")
-axes[0].set_xlabel('Helioprojective Lon')
-axes[0].set_ylabel('Helioprojective Lat')
+# # Original full disk
+# axes[0].imshow(first_map.data, origin='lower', cmap='gray')
+# axes[0].set_title("Original (full disk)")
+# axes[0].set_xlabel('Helioprojective Lon')
+# axes[0].set_ylabel('Helioprojective Lat')
 
-# Primer recortado
-axes[1].imshow(cropped_first.data, origin='lower', cmap='gray')
-axes[1].set_title(f"Cropped ±{CROP_LIM.value}\" arsec")
-axes[1].set_xlabel('Helioprojective Lon')
-axes[1].set_ylabel('Helioprojective Lat')
+# # Primer recortado
+# axes[1].imshow(cropped_first.data, origin='lower', cmap='gray')
+# axes[1].set_title(f"Cropped ±{CROP_LIM.value}\" arsec")
+# axes[1].set_xlabel('Helioprojective Lon')
+# axes[1].set_ylabel('Helioprojective Lat')
 
-# Colorbar horizontal para ambas
-cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
-cbar.set_label('Intensidad [DN]')
+# # Colorbar horizontal para ambas
+# cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
+# cbar.set_label('Intensidad [DN]')
 
-plt.show()
+# plt.show()
 
 print("Procesamiento optimizado completado. Mapas guardados en:", OUTPUT_DIR)
