@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 
 from astropy.io import fits
@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 print("Iniciando codigo bigsonic")
 
-scale = 0.504 #arcsec/pixel ; change manually
+scale = 1814.544 #arcsec/pixel ; change manually
 t_step = 45 #Mean time separation between images [s] ; change manually
 v_ph = 4.0 # Maximum phase velocity [km/s]
 
