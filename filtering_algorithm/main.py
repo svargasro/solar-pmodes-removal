@@ -39,4 +39,4 @@ filtered_cube = bigsonic(
 
 # -------- GUARDAR CUBO FILTRADO --------
 np.save("filtered_cube.npy", filtered_cube)
-print("✅ Cubo filtrado guardado como 'filtered_cube.npy'")
+print("Cubo filtrado guardado como 'filtered_cube.npy'")
