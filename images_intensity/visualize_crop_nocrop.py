@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# visualize_crop_vs_original.py
 
 import os
 import glob
@@ -36,13 +37,13 @@ axes[0].set_title("Original (full disk)")
 axes[0].set_xlabel('Helioprojective Lon')
 axes[0].set_ylabel('Helioprojective Lat')
 
-cropped_map.plot(axes=axes[1], cmap='gray')
+cropped_map.plot(axes=axes[1], cmap='gray',autoalign=True)
 axes[1].set_title("Recortado (±500)")
 axes[1].set_xlabel('Helioprojective Lon')
 axes[1].set_ylabel('Helioprojective Lat')
 
-cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
-cbar.set_label('Intensidad [DN]')
+# cbar = fig.colorbar(axes[1].images[0], ax=axes, orientation='horizontal', pad=0.1)
+# cbar.set_label('Intensidad [DN]')
 
 
 plt.show()

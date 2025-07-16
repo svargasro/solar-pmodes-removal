@@ -8,6 +8,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from sunpy.map import Map
 from sunpy.physics.differential_rotation import differential_rotate
+from sunpy.time import parse_time
 
 # -------- PARÁMETROS --------
 INPUT_DIR  = "data_hmi_Ic_45s/"
@@ -39,6 +40,7 @@ def crop_and_save(path, observer, out_dir, crop_lim, is_first=False, index=0, to
     bl = SkyCoord(-crop_lim, -crop_lim, frame=m_rot.coordinate_frame)
     tr = SkyCoord(crop_lim, crop_lim, frame=m_rot.coordinate_frame)
     m_crop = m_rot.submap(bottom_left=bl, top_right=tr)
+    m_crop.meta['DATE-OBS'] = parse_time(m_rot.date).isot #Agregado
 
     out_path = os.path.join(out_dir, f"dr_crop_{fname}")
     m_crop.save(out_path, overwrite=True)

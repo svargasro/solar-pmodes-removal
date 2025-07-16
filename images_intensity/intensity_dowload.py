@@ -12,9 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # -------- PARÁMETROS --------
-fecha    = "2023-06-01"
+fecha    = "2023-07-01"
 hora_ini = "00:00"
-hora_fin = "00:10"
+hora_fin = "00:05"
 cadencia = 45 * u.second
 carpeta  = "data_hmi_Ic_45s/"  # carpeta para intensidad de continuo
 
