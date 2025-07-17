@@ -24,9 +24,9 @@ print(f"Cubo raw guardado en '{RAW_CUBE_NPY}' con forma {cube_raw.shape}")
 # -------- 2) Cargar cubo raw y filtrado --------
 cube_raw = np.load(RAW_CUBE_NPY)
 
-print("Frames encontrados:", cube_raw.shape[0])
-print("Dimensiones espacial:", cube_raw.shape[1:], "(H, W)")
-print(f"Cubo raw guardado en '{RAW_CUBE_NPY}' con forma {cube_raw.shape}")
+# print("Frames encontrados:", cube_raw.shape[0])
+# print("Dimensiones espacial:", cube_raw.shape[1:], "(H, W)")
+# print(f"Cubo raw guardado en '{RAW_CUBE_NPY}' con forma {cube_raw.shape}")
 
 cube_filt = np.load(FILTERED_CUBE_NPY)
 T, H, W = cube_raw.shape
