@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 print("Iniciando codigo bigsonic")
 
-scale = 1814.544 #arcsec/pixel ; change manually
+scale = 0.50404 #arcsec/pixel ; change manually
 t_step = 45 #Mean time separation between images [s] ; change manually
 v_ph = 4.0 # Maximum phase velocity [km/s]
 
@@ -66,7 +66,7 @@ def bigsonic(cube,first,last,bxdim,bydim,path_tmp):
     
     ap = 0
     
-    cut = 0
+    cut = 1
     
     if (cut > 2) or (cut < 0):
         raise ValueError('The cut values alowed are 0, 1, and 2')
