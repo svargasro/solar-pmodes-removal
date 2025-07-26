@@ -105,5 +105,15 @@ Contiene los datos y scripts para entrenar y evaluar la red neuronal “1 a 
 
 Licencia de uso del repositorio.
 
+## ▶️ Flujo de trabajo típico
+
+1. **Descarga y preprocesamiento** (`images_intensity/`):  
+   - Co‑alinear, recortar y guardar FITS en `data_hmi_Ic_45s_crop_dr/`.
+2. **Filtrado clásico** (`filtering_algorithm/main.py`):  
+   - Genera `filtered_cube.npy` con BigSonic.
+3. **Entrenamiento ML** (`training/one_one_filtering_ml.py`):  
+   - Ajusta un autoencoder 2D en pares `(raw, filtered)`.
+4. **Inferencia ML** (`training/ml_cube_generation.py`):  
+   - Produce `ml_cube.npy` con la red, luego verifica con FFT (`filter_verification.py`).
 ---
 
