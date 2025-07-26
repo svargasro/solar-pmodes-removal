@@ -24,7 +24,7 @@ os.makedirs(carpeta, exist_ok=True)
 # -------- BUSCA ARCHIVOS LOCALMENTE --------
 files = sorted(glob.glob(os.path.join(carpeta, "*.fits")))
 
-# -------- SI NO HAY ARCHIVOS, DESCÁRGALOS VIA VSO --------
+
 if len(files) == 0:
     print("No se encontraron archivos. Descargando intensidad de continuo vía VSO ...")
     result = Fido.search(
