@@ -3,7 +3,7 @@
 
 import os
 import glob
-from sunpy.net import Fido, attrs as a
+from sunpy.net import Fido, attrs as a #Fido es una interfaz unificada de búsqueda y descarga de datos solares
 from astropy import units as u
 from astropy.io import fits
 import sunpy.map

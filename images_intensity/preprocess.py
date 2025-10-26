@@ -17,13 +17,13 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # Listado de archivos y referencia
 files        = sorted(glob.glob(os.path.join(INPUT_DIR, "*.fits")))
 first_map    = Map(files[0])
-ref_observer = first_map.observer_coordinate
+ref_observer = first_map.observer_coordinate #obtiene la coordenada del observador (posicion/lin-of-sight del observatorio) del primer mapa (referencia para la rotación diferencial de todas las imágenes)
 
 # Muestra para fijar dimensiones de píxeles
-bl_s = SkyCoord(-CROP_LIM, -CROP_LIM, frame=first_map.coordinate_frame)
-tr_s = SkyCoord( CROP_LIM,  CROP_LIM, frame=first_map.coordinate_frame)
-sample = first_map.submap(bottom_left=bl_s, top_right=tr_s)
-ny_ref, nx_ref = sample.data.shape
+bl_s = SkyCoord(-CROP_LIM, -CROP_LIM, frame=first_map.coordinate_frame) #Devuelve las coordenadas de la esquina inferior izquierda
+tr_s = SkyCoord( CROP_LIM,  CROP_LIM, frame=first_map.coordinate_frame) #Devuelve las coordenadas de la esquina superior derecha
+sample = first_map.submap(bottom_left=bl_s, top_right=tr_s) #Extrae la subventana espacial.
+ny_ref, nx_ref = sample.data.shape #Extrae dimensiones: referencia.
 print(f"→ Tamaño fijo de recorte (pixeles): {ny_ref}×{nx_ref}")
 
 def crop_and_save(path, observer, out_dir, crop_lim, idx, total):
