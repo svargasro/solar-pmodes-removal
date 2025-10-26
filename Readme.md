@@ -1,117 +1,117 @@
-# Resumen del repositorio `solar-pmodes-removal`
+# Summary of the `solar-pmodes-removal` Repository
 
-Este repositorio contiene código y datos para descargar, preprocesar y filtrar modos p en imágenes HMI, así como experimentos con redes neuronales para acelerar el filtrado.
+This repository contains code and data to download, preprocess, and filter **p-modes** in HMI images, as well as experiments with neural networks to accelerate the filtering process.
 
 ---
 
-## 📂 Estructura general
+## 📂 General Structure
 
 solar-pmodes-removal/
 ├── images_intensity/
 ├── filtering_algorithm/
+├── training/
 ├── LICENSE
-├── test_data/
-└── training/
+└── test_data/
 
+---
 
-## 📂 `images_intensity/` 
+## 📂 `images_intensity/`
 
-Scripts para descargar, preprocesar, recortar y visualizar secuencias de intensidad continua (`Ic_45s`):
+Scripts for downloading, preprocessing, cropping, and visualizing HMI continuum intensity (`Ic_45s`) sequences:
 
-- **`intensity_dowload.py`**  
-  Descarga de datos HMI Ic_45s, con cache local.
+- **`intensity_download.py`**  
+  Downloads HMI Ic_45s data with local caching.
 
-- **`preprocess.py`** y **`parallel_preprocess.py`**  
-  Co‑alineación (differential rotation) y recorte a ±500 arcsec, en serie y en paralelo.
+- **`preprocess.py`** and **`parallel_preprocess.py`**  
+  Co-alignment (differential rotation) and cropping to ±500 arcsec, sequential and parallel versions.
 
 - **`visualize_crop_nocrop.py`**  
-  Visualiza lado a lado imágenes originales y recortadas.
+  Displays side-by-side original and cropped images.
 
 - **`len_verification.py`**  
-  Verifica que todas las imágenes tengan la misma dimensión.
+  Verifies that all images have the same dimensions.
 
 - **`bx_by_dim.py`**  
-  Calcula las dimensiones de bloque para hacer luego la modificación correspondiente en `BigNFFT`.
+  Computes block dimensions to later adjust `BigNFFT` configuration.
 
 - **`animate_gif.py`**  
-  Crea GIFs de la evolución temporal de las secuencias.
+  Creates GIFs showing the temporal evolution of the sequences.
 
 ---
 
 ## 📂 `filtering_algorithm/`
 
-Contiene la implementación clásica del filtro subsonic (BigSonic) y utilidades para animar y probar el cubo:
-
+Contains the classic implementation of the **subsonic filter** (BigSonic) and utilities to animate and test the data cube:
 
 - **`main.py`**  
-  Script de ejemplo que construye el cubo, aplica `bigsonic()` y guarda `filtered_cube.npy`.
+  Example script that builds the cube, applies `bigsonic()`, and saves `filtered_cube.npy`.
 
 - **`bigsonic_hmi.py`**  
-  Código principal que genera el filtro subsonic vía FFT 3D y aplica BigNFFT.
+  Main code that generates the subsonic filter via 3D FFT and applies `BigNFFT`.
 
 - **`bignfft_new.py`**  
-  Clase `BigNFFT` para procesamiento en lotes y memmap, optimizada para cubos grandes.
+  `BigNFFT` class for batch and memmap processing, optimized for large cubes.
 
 - **`animation_cube.py`**  
-  Genera una animación GIF del cubo filtrado.
+  Generates an animated GIF of the filtered cube.
 
 - **`test.py`**  
-  Pruebas básicas de consistencia y verificación rápida de la longitud de los datos antes del preprocesamiento.
+  Basic consistency checks and quick verification of data length before preprocessing.
 
 - **`bigsonic_output/`**  
-  Carpeta temporal donde `BigNFFT` escribe archivos intermedios.
-
----
-
+  Temporary folder where `BigNFFT` writes intermediate files.
 
 ---
 
 ## 📂 `test_data/`
 
 - **`data_test.ipynb`**  
-  Notebook de prueba con ejemplos mínimos de descarga, visualización y filtrado.
+  Test notebook with minimal examples for downloading, visualizing, and filtering data.
 
 ---
 
-## 📂 `training/` 
+## 📂 `training/`
 
-Contiene los datos y scripts para entrenar y evaluar la red neuronal “1 a 1” y pruebas del PIML 3D:
-
+Contains data and scripts to train and evaluate the **1-to-1 neural network** and 3D PIML tests:
 
 - **`filter_verification.py`**  
-  filter_verification.py crea el cubo de datos antes del filtrado, necesario para el entrenamiento de la red neuronal.
-  Además, verifica la supresión de modos p tras pasar por la red (FFT temporal y cálculo de potencia).
+  Builds the pre-filtered data cube required for training and verifies p-mode suppression after passing through the neural network (temporal FFT and power spectrum analysis).
 
 - **`one_one_filtering_ml.py`**  
-  Entrena y evalúa un autoencoder 2D que mapea cada imagen cruda → filtrada. Guarda el modelo entrenado. 
+  Trains and evaluates a 2D autoencoder mapping raw → filtered images. Saves the trained model.
 
 - **`ml_cube_generation.py`**  
-  Script final de inferencia que recarga el modelo y genera `ml_cube.npy`.
+  Inference script that loads the model and generates `ml_cube.npy`.
 
-- **`filter_after_ml.py`**
-    Compara los filtrados y la imagen original para comprobar el funcionamiento de la red neuronal (mediante evaluación de la    transformada de Fourier)
+- **`filter_after_ml.py`**  
+  Compares filtered and original images to check the neural network performance (via Fourier transform analysis).
 
-- **`cube_ml_animation.py` (1.0 KB)**  
-      Genera GIF del cubo filtrado por ML.
+- **`cube_ml_animation.py` (1.0 KB)**  
+  Generates GIF animations of the ML-filtered cube.
 
 - **`many_times_filtering_ml.py`**  
-  Modelo alternativo que aún se está estudiando.
+  Alternative model currently under study.
 
 ---
 
-## 📄 `LICENSE` (34 KB)
+## 📄 `LICENSE` (34 KB)
 
-Licencia de uso del repositorio.
+Repository usage license.
 
-## ▶️ Flujo de trabajo típico
-
-1. **Descarga y preprocesamiento** (`images_intensity/`):  
-   - Co‑alinear, recortar y guardar FITS en `data_hmi_Ic_45s_crop_dr/`.
-2. **Filtrado clásico** (`filtering_algorithm/main.py`):  
-   - Genera `filtered_cube.npy` con BigSonic.
-3. **Entrenamiento ML** (`training/one_one_filtering_ml.py`):  
-   - Ajusta un autoencoder 2D en pares `(raw, filtered)`.
-4. **Inferencia ML** (`training/ml_cube_generation.py`):  
-   - Produce `ml_cube.npy` con la red, luego verifica con FFT (`filter_verification.py`).
 ---
 
+## ▶️ Typical Workflow
+
+1. **Download and preprocessing** (`images_intensity/`):  
+   - Co-align, crop, and save FITS files in `data_hmi_Ic_45s_crop_dr/`.
+
+2. **Classic filtering** (`filtering_algorithm/main.py`):  
+   - Generates `filtered_cube.npy` using BigSonic.
+
+3. **ML training** (`training/one_one_filtering_ml.py`):  
+   - Trains a 2D autoencoder on `(raw, filtered)` pairs.
+
+4. **ML inference** (`training/ml_cube_generation.py`):  
+   - Produces `ml_cube.npy` using the trained network, then verifies with FFT (`filter_verification.py`).
+
+---
